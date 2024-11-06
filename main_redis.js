@@ -1,5 +1,8 @@
 import redisClient from './utils/redis';
 
+// Command to run this file
+// npm run dev main_redis.js
+
 (async () => {
   console.log('Testing if redis is alive');
   const isAlive = await redisClient.isAlive();
