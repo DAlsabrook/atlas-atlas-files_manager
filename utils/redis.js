@@ -2,7 +2,7 @@ import { createClient } from "redis";
 
 class RedisClient {
   // Uses the latest redis version
-  
+
   constructor() {
     this.client = createClient();
     this.client.on('error', err => console.log('Redis Constructor Client Error: ', err));
@@ -67,6 +67,14 @@ class RedisClient {
     }
   }
 
+  async flushAll() {
+    try {
+      await this.client.flushAll();
+      console.log('All keys have been cleared from Redis');
+    } catch (err) {
+      console.log('Error clearing Redis cache:', err);
+    }
+  }
 }
 
 const redisClient = new RedisClient();

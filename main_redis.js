@@ -17,5 +17,6 @@ import redisClient from './utils/redis';
   setTimeout(async () => {
     const expiredValue = await redisClient.get('myKey');
     console.log('Value after expiration:', expiredValue);
+    redisClient.flushAll();
   }, 1000 * 10);
 })();
