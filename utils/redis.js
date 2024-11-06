@@ -1,6 +1,8 @@
 import { createClient } from "redis";
 
 class RedisClient {
+  // Uses the latest redis version
+  
   constructor() {
     this.client = createClient();
     this.client.on('error', err => console.log('Redis Constructor Client Error: ', err));
@@ -9,16 +11,17 @@ class RedisClient {
   async isAlive() {
     // Method to test if redis is able to be connected to
     // Returns true on connection and false when cannot connect
-
     try {
       await this.client.connect();
       // ping() returns the str "PONG" if it can connect
       const isConnected = await this.client.ping();
+      console.log(isConnected)
       if (isConnected === 'PONG') {
         return true;
       };
     } catch (err) {
       // Returns false if ping() can not connect
+      console.log(err)
       return false;
     }
   }

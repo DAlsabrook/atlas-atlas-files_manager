@@ -2,16 +2,20 @@ import redisClient from './utils/redis';
 
 (async () => {
   console.log('Testing if redis is alive');
-  console.log(redisClient.isAlive());
+  const isAlive = await redisClient.isAlive();
+  console.log('Is Redis alive:', isAlive);
 
   console.log('Get a value');
-  console.log(await redisClient.get('myKey'));
+  const value = await redisClient.get('myKey');
+  console.log('Value:', value);
 
   console.log('Set a Value');
   await redisClient.set('myKey', 12, 5);
-  console.log(await redisClient.get('myKey'));
+  const newValue = await redisClient.get('myKey');
+  console.log('New Value:', newValue);
 
   setTimeout(async () => {
-    console.log(await redisClient.get('myKey'));
-  }, 1000 * 10)
+    const expiredValue = await redisClient.get('myKey');
+    console.log('Value after expiration:', expiredValue);
+  }, 1000 * 10);
 })();
