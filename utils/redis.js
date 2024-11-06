@@ -14,7 +14,9 @@ class RedisClient {
       await self.client.connect();
       // ping() returns the str "PONG" if it can connect
       const isConnected = await self.client.ping();
-      return isConnected === 'PONG';
+      if (isConnected === 'PONG') {
+        return true;
+      };
     } catch (err) {
       // Returns false if ping() can not connect
       return false;
@@ -28,6 +30,7 @@ class RedisClient {
       console.log('Redis get method key must be a string');
       return;
     }
+
     const value = await self.client.get(key);
     return value;
   }
