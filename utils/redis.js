@@ -2,18 +2,18 @@ import { createClient } from "redis";
 
 class RedisClient {
   constructor() {
-    const client = createClient();
-    client.on('error', err => console.log('Redis Constructor Client Error: ', err));
+    this.client = createClient();
+    this.client.on('error', err => console.log('Redis Constructor Client Error: ', err));
   }
 
-  async isAlive(self) {
+  async isAlive() {
     // Method to test if redis is able to be connected to
     // Returns true on connection and false when cannot connect
 
     try {
-      await self.client.connect();
+      await this.client.connect();
       // ping() returns the str "PONG" if it can connect
-      const isConnected = await self.client.ping();
+      const isConnected = await this.client.ping();
       if (isConnected === 'PONG') {
         return true;
       };
@@ -23,7 +23,7 @@ class RedisClient {
     }
   }
 
-  async get(self, key) {
+  async get(key) {
     // Gets a value at a specific key from the cache
     if (typeof key !== 'string') {
       // key variable is not a string
@@ -31,11 +31,11 @@ class RedisClient {
       return;
     }
 
-    const value = await self.client.get(key);
+    const value = await this.client.get(key);
     return value;
   }
 
-  async set(self, key, value, duration) {
+  async set(key, value, duration) {
     // Set a value with a duration in cache
     if (typeof key !== 'string') {
       // key variable is not a string
@@ -44,13 +44,13 @@ class RedisClient {
     };
 
     try {
-      await self.client.set(key, value, 'EX', duration);
+      await this.client.set(key, value, 'EX', duration);
     } catch (err) {
       console.log('Error setting key in Redis:', err);
     }
   }
 
-  async del(self, key) {
+  async del(key) {
     // Remove a value from the cache
     if (typeof key !== 'string') {
       console.log('Redis del method key must be a string');
@@ -58,7 +58,7 @@ class RedisClient {
     }
 
     try {
-      await self.client.del(key);
+      await this.client.del(key);
     } catch (err) {
       console.log('Error deleting key in Redis:', err);
     }
