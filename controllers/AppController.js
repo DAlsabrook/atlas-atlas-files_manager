@@ -4,17 +4,7 @@ const dbClient = require('../utils/db');
 const getStatus = async (req, res) => {
   try {
     const redisIsAlive = await redisClient.isAlive();
-
-    console.log("redisIsAlive status:");
-    console.log(redisIsAlive);
-
-    console.log(dbClient)
     const dbIsAlive = dbClient.isAlive();
-    
-
-    console.log("dbIsAlive status:");
-    console.log(dbIsAlive);
-
     res.status(200).send({ redis: redisIsAlive, db: dbIsAlive });
   } catch (error) {
     res.status(500).send({ error: 'Error getting status of redis and db' });
@@ -23,6 +13,7 @@ const getStatus = async (req, res) => {
 
 const stats = async (req, res) => {
   try {
+    dbClient.createUser();
     const numUsers = await dbClient.nbUsers();
     const numFiles = await dbClient.nbFiles();
     res.status(200).send({ users: numUsers, files: numFiles });

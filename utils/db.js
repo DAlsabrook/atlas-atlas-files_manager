@@ -52,6 +52,18 @@ class DBClient {
             return 0;
         }
     }
+
+    async createUser(user = {name: 'TestGuy123', email: 'testGuy123@blahblah.com'}) {
+      if (!this.isAlive()) return 0;
+      try {
+        const users = this.db.collection('users');
+        const result = await users.insertOne(user);
+        return result.insertedCount;
+      } catch (error) {
+        console.error('Error creating user:', error);
+        return 0;
+      }
+    }
 }
 
 const dbClient = new DBClient();
