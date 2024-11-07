@@ -8,14 +8,16 @@ const getStatus = async (req, res) => {
     console.log("redisIsAlive status:");
     console.log(redisIsAlive);
 
+    console.log(dbClient)
     const dbIsAlive = dbClient.isAlive();
+    
 
     console.log("dbIsAlive status:");
     console.log(dbIsAlive);
 
     res.status(200).send({ redis: redisIsAlive, db: dbIsAlive });
   } catch (error) {
-    res.status(500).send({ error: 'An error occurred' });
+    res.status(500).send({ error: 'Error getting status of redis and db' });
   }
 };
 
@@ -25,7 +27,7 @@ const stats = async (req, res) => {
     const numFiles = await dbClient.nbFiles();
     res.status(200).send({ users: numUsers, files: numFiles });
   } catch (error) {
-    res.status(500).send({ error: 'An error occurred' });
+    res.status(500).send({ error: 'Error getting stats' });
   }
 };
 
