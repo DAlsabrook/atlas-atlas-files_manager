@@ -8,7 +8,7 @@ const getStatus = () => {
 };
 
 const stats = () => {
-  return { "users": dbClient.nbUsers, "files": dbClient.nbfiles }
+  return { "users": dbClient.nbUsers(), "files": dbClient.nbfiles() }
 }
 
 module.exports = {

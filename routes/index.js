@@ -1,7 +1,9 @@
-// Single routing
+const express = require('express');
 const router = express.Router();
-const AppController = require('./controllers');
+const { getStatus, stats } = require('../controllers/AppController');
 
-router.get('/status', AppController.getStatus);
+router.get('/status', getStatus);
 
-router.get('/stats', AppController.getStats);
+router.get('/stats', stats);
+
+module.exports = router;
