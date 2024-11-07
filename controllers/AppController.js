@@ -4,11 +4,11 @@ const dbClient = require('../utils/db');
 const getStatus = async (req, res) => {
   try {
     const redisIsAlive = await redisClient.isAlive();
-    
+
     console.log("redisIsAlive status:");
     console.log(redisIsAlive);
 
-    const dbIsAlive = await dbClient.isAlive();
+    const dbIsAlive = dbClient.isAlive();
 
     console.log("dbIsAlive status:");
     console.log(dbIsAlive);

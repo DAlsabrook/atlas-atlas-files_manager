@@ -15,7 +15,6 @@ class RedisClient {
       await this.client.connect();
       // ping() returns the str "PONG" if it can connect
       const isConnected = await this.client.ping();
-      console.log(isConnected)
       if (isConnected === 'PONG') {
         return true;
       };
