@@ -1,9 +1,11 @@
 const sha1 = require('sha1');
 const dbClient = require('../utils/db');
 
-class UserController {
+class UsersController {
   static async postNew(req, res) {
     try {
+      console.log('Request body:', req.body);
+
       const { email, password } = req.body;
 
       if (!email) {
@@ -39,4 +41,4 @@ class UserController {
   }
 }
 
-module.exports = UserController;
+module.exports = UsersController;
