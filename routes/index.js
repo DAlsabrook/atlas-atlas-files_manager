@@ -12,7 +12,7 @@ router.get('/stats', AppController.stats);
 router.post('/users', UserController.postNew);
 
 router.get('/connect', AuthController.getConnect);
-// router.get('/disconnect', AuthController.getDisconnect);
-// router.get('/user/me', UserController.getMe);
+router.get('/disconnect', AuthController.getDisconnect);
+router.get('/users/me', UserController.getMe);
 
 module.exports = router;

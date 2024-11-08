@@ -1,5 +1,5 @@
 
-const MongoClient = require('mongodb').MongoClient;
+const { MongoClient, ObjectId } = require('mongodb');
 
 class DBClient {
     constructor() {
@@ -65,7 +65,7 @@ class DBClient {
       }
     }
 
-    async findUser(email, hashedPassword) {
+    async findUserByEmailAndPassowrd(email, hashedPassword) {
       try {
         const user = await this.db.collection('users').findOne({email: email, password: hashedPassword});
         return user ? user._id : null;
@@ -73,6 +73,28 @@ class DBClient {
         console.error('Error finding user in DB');
       }
     }
+
+  async findUserByID(ID) {
+    try {
+      const user = await this.db.collection('users').findOne({ _id: new ObjectId(ID) });
+      return user;
+    } catch (error) {
+      console.error('Error finding user in DB:', error);
+      return null;
+    }
+  }
+
+
+  async getAllUsers() {
+    if (!this.isAlive()) return [];
+    try {
+      const users = this.db.collection('users');
+      return await users.find({}).toArray();
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
+  }
 }
 
 const dbClient = new DBClient();

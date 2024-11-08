@@ -1,5 +1,6 @@
 const sha1 = require('sha1');
 const dbClient = require('../utils/db');
+const redisClient = require('../utils/redis');
 
 class UsersController {
   static async postNew(req, res) {
@@ -38,7 +39,31 @@ class UsersController {
     }
   }
 
+  static async getMe(req, res) {
+    const token = req.headers['x-token'];
+    if (!token) {
+      return res.status(401).send('Unauthorized: No X-Token in header')
+    }
+
+    const cacheCheck = redisClient.isAlive();
+    if (!cacheCheck) {
+      return res.status(400).send('Cache not connected')
+    }
+
+    const redisKey = `auth_${token}`
+    const userID = await redisClient.get(redisKey);
+    const user = await dbClient.findUserByID(userID);
+    if (!userID || !user) {
+      return res.status(401).send('Unauthorized');
+    }
+    
+    const email = user.email;
+    return res.status(200).send({ id: userID, email });
+  }
 
 }
 
 module.exports = UsersController;
+
+// 4ee6abe3-163e-4221-8e3a-1de9be066456
+
