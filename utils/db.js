@@ -64,6 +64,15 @@ class DBClient {
         return 0;
       }
     }
+
+    async findUser(email, hashedPassword) {
+      try {
+        const user = await this.db.collection('users').findOne({email: email, password: hashedPassword});
+        return user ? user._id : null;
+      } catch (error) {
+        console.error('Error finding user in DB');
+      }
+    }
 }
 
 const dbClient = new DBClient();

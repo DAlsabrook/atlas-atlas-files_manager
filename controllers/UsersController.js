@@ -4,10 +4,8 @@ const dbClient = require('../utils/db');
 class UsersController {
   static async postNew(req, res) {
     try {
-      console.log('Request body:', req.body);
-
       const { email, password } = req.body;
-      
+
       if (!email) {
         return res.status(400).json({ error: 'Missing email' });
       }
@@ -39,6 +37,8 @@ class UsersController {
       return res.status(500).json({ error: 'Internal server error' });
     }
   }
+
+
 }
 
 module.exports = UsersController;
