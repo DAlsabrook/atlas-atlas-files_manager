@@ -14,21 +14,13 @@ class AppController {
 
   static async stats(req, res) {
     try {
+      // Add a test user to the database
       // await dbClient.createUser();
       const numUsers = await dbClient.nbUsers();
       const numFiles = await dbClient.nbFiles();
       res.status(200).send({ users: numUsers, files: numFiles });
     } catch (error) {
       res.status(500).send({ error: 'Error getting stats' });
-    }
-  }
-
-  static async createTestUser(req, res) {
-    try {
-      const result = await dbClient.createUser();
-      res.status(201).send({ insertedCount: result });
-    } catch (error) {
-      res.status(500).send({ error: 'Error creating test user' });
     }
   }
 }
