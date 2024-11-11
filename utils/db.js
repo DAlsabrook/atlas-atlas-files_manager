@@ -7,7 +7,8 @@ class DBClient {
         const port = process.env.DB_PORT || '27017';
         const database = process.env.DB_DATABASE || 'files_manager';
         // mongo server www.mongodb://localhost:27017
-        const url = `mongodb://${host}:${port}`;
+        // const url = `mongodb://${host}:${port}`;
+        const url = "mongodb+srv://admin:admin@cluster0.3x22f.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
 
         this.client = new MongoClient(url, { useUnifiedTopology: true });
         this.db = null;
