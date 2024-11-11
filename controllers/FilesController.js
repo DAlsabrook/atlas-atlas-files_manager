@@ -89,6 +89,53 @@ class FilesController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  static async getShow(req, res) {
+    try {
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const file = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(req.params.id),
+        userId: ObjectId(userId)
+      });
+      
+      if (!file) return res.status(404).json({ error: 'Not found' });
+      
+      return res.json(file);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async getIndex(req, res) {
+    try {
+      const token = req.headers['x-token'];
+      const userId = await redisClient.get(`auth_${token}`);
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+  
+      const page = parseInt(req.query.page) || 0;
+      const files = await dbClient.db.collection('files')
+        .aggregate([
+          { 
+            $match: {
+              userId: ObjectId(userId),
+              parentId: req.query.parentId ? ObjectId(req.query.parentId) : 0
+            }
+          },
+          { $skip: page * 20 },
+          // 20 page limit set here, which I believe is working 
+          { $limit: 20 }
+        ]).toArray();
+  
+      return res.json(files);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
 }
 
 module.exports = FilesController;
