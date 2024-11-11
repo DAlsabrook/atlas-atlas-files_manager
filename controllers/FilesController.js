@@ -141,6 +141,14 @@ class FilesController {
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+  static async putPublish(req, res) {
+
+  }
+
+  static async putUnpublish(req, res) {
+
+  }
 }
 
 module.exports = FilesController;
