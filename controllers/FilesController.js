@@ -148,6 +148,22 @@ class FilesController {
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
+
+      // find files that match to the user
+      const files = await dbClient.db.collection('files')
+        .aggregate([
+          {
+            $match: {
+              userId: ObjectId(userId),
+              parentId: req.query.parentId ? ObjectId(req.query.parentId) : 0
+            }
+          }
+        ]).toArray();
+
+        if (!files || files.length === 0) {
+          return res.status(404).send('Not Found')
+        }
+
       // file logic here
     } catch (error) {
       console.error(error);
