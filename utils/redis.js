@@ -1,51 +1,49 @@
-import { createClient } from "redis";
+const { createClient } = require('redis');
 
 class RedisClient {
-  // Uses the latest redis version
-
   constructor() {
     this.client = createClient();
-    this.client.on('error', err => console.log('Redis Constructor Client Error: ', err));
+    this.client.on('error', (err) => console.log('Redis Client Error:', err));
+    this.connected = false;
+  }
+
+  async connect() {
+    if (!this.connected) {
+      await this.client.connect();
+      this.connected = true;
+    }
   }
 
   async isAlive() {
-    // Method to test if redis is able to be connected to
-    // Returns true on connection and false when cannot connect
     try {
-      await this.client.connect();
-      // ping() returns the str "PONG" if it can connect
+      await this.connect();
       const isConnected = await this.client.ping();
-      if (isConnected === 'PONG') {
-        return true;
-      };
+      return isConnected === 'PONG';
     } catch (err) {
-      // Returns false if ping() can not connect
-      console.log(err)
+      console.log(err);
       return false;
     }
   }
 
   async get(key) {
-    // Gets a value at a specific key from the cache
     if (typeof key !== 'string') {
-      // key variable is not a string
       console.log('Redis get method key must be a string');
       return;
     }
 
+    await this.connect();
     const value = await this.client.get(key);
     return value;
   }
 
   async set(key, value, duration) {
-    // Set a value with a duration in cache
     if (typeof key !== 'string') {
-      // key variable is not a string
-      console.log('Redis get method key must be a string');
+      console.log('Redis set method key must be a string');
       return;
-    };
+    }
 
     try {
+      await this.connect();
       await this.client.set(key, value);
       await this.client.expire(key, duration);
     } catch (err) {
@@ -54,13 +52,13 @@ class RedisClient {
   }
 
   async del(key) {
-    // Remove a value from the cache
     if (typeof key !== 'string') {
       console.log('Redis del method key must be a string');
       return;
     }
 
     try {
+      await this.connect();
       await this.client.del(key);
     } catch (err) {
       console.log('Error deleting key in Redis:', err);
@@ -69,6 +67,7 @@ class RedisClient {
 
   async flushAll() {
     try {
+      await this.connect();
       await this.client.flushAll();
       console.log('All keys have been cleared from Redis');
     } catch (err) {

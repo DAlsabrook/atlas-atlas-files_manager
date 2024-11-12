@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
+const mime = require('mime-types');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -14,9 +15,7 @@ class FilesController {
       }
 
       const cacheCheck = redisClient.isAlive();
-      if (!cacheCheck) {
-        return res.status(400).send('Cache not connected')
-      }
+      if (!cacheCheck) return res.status(400).send('Cache not connected');
 
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) {
@@ -98,6 +97,10 @@ class FilesController {
   static async getShow(req, res) {
     try {
       const token = req.headers['x-token'];
+
+      const cacheCheck = redisClient.isAlive();
+      if (!cacheCheck) return res.status(400).send('Cache not connected');
+
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -118,6 +121,10 @@ class FilesController {
   static async getIndex(req, res) {
     try {
       const token = req.headers['x-token'];
+
+      const cacheCheck = redisClient.isAlive();
+      if (!cacheCheck) return res.status(400).send('Cache not connected');
+
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
@@ -145,28 +152,49 @@ class FilesController {
   static async putPublish(req, res) {
     try {
       const token = req.headers['x-token'];
+
+      const cacheCheck = redisClient.isAlive();
+      if (!cacheCheck) return res.status(400).send('Cache not connected');
+
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
+      const fileId = req.params.id;
 
-      // find files that match to the user
-      const files = await dbClient.db.collection('files')
-        .aggregate([
-          {
-            $match: {
-              userId: ObjectId(userId),
-              parentId: req.query.parentId ? ObjectId(req.query.parentId) : 0
-            }
-          }
-        ]).toArray();
+      // find the file
+      const file = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(fileId),
+        userId: ObjectId(userId)
+      });
 
-        if (!files || files.length === 0) {
-          return res.status(404).send('Not Found')
+      if (!file) {
+        return res.status(404).json({ error: 'Not Found' });
+      }
+
+      // update the found file
+      const updateResult = await dbClient.db.collection('files').updateOne(
+        {
+          _id: ObjectId(fileId),
+          userId: ObjectId(userId)
+        },
+        {
+          $set: { isPublic: true }
         }
+      );
 
-      // file logic here
+      if (updateResult.modifiedCount === 0) {
+        return res.status(500).json({ error: 'Failed to update the document' });
+      }
+
+      // get the new updated file to return
+      const updatedFile = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(fileId),
+        userId: ObjectId(userId)
+      });
+
+      return res.status(200).json({ updatedFile });
     } catch (error) {
-      console.error(error);
+      console.error('Error updating document:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }
@@ -174,12 +202,93 @@ class FilesController {
   static async putUnpublish(req, res) {
     try {
       const token = req.headers['x-token'];
+
+      const cacheCheck = redisClient.isAlive();
+      if (!cacheCheck) return res.status(400).send('Cache not connected');
+
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-      // file logic here
+      const fileId = req.params.id;
+
+      // Find the file
+      const file = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(fileId),
+        userId: ObjectId(userId)
+      });
+
+      if (!file) {
+        return res.status(404).json({ error: 'Not Found' });
+      }
+
+      // update the found file
+      const updateResult = await dbClient.db.collection('files').updateOne(
+        {
+          _id: ObjectId(fileId),
+          userId: ObjectId(userId)
+        },
+        {
+          $set: { isPublic: false }
+        }
+      );
+
+      if (updateResult.modifiedCount === 0) {
+        return res.status(500).json({ error: 'Failed to update the document' });
+      }
+
+      // get the new updated file to return
+      const updatedFile = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(fileId),
+        userId: ObjectId(userId)
+      });
+
+      return res.status(200).json({ updatedFile });
     } catch (error) {
-      console.error(error);
+      console.error('Error updating document:', error);
+      return res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async getFile(req, res) {
+    try {
+      const token = req.headers['x-token'];
+
+      const userId = await redisClient.get(`auth_${token}`);
+      if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+      const fileId = req.params.id;
+      console.log(fileId)
+
+      // Find the file
+      const file = await dbClient.db.collection('files').findOne({
+        _id: ObjectId(fileId),
+        userId: ObjectId(userId),
+        isPublic: true
+      });
+      console.log(file)
+      if (!file) {
+        return res.status(404).json({ error: 'Not Found' });
+      } else if (file.type === 'folder') {
+        return res.status(400).json({
+          error: "A folder doesn't have content"
+        })
+      }
+
+      const filePath = path.join(__dirname, 'files', file.localPath);
+      // Method is breaking here because the file does exists locally but the task makes you check if the file is local or not
+      // Makes no sense because we are storing it in a db but im too tired to figure it out. Looking tomorrow
+      // check if the file exists locally
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Not Found' });
+      }
+
+      const mimeType = mime.lookup(file.name);
+      const fileContent = fs.readFileSync(filePath);
+      res.setHeader('Content-Type', mimeType);
+
+      return res.status(200).send(fileContent);
+    } catch (error) {
+      console.error('Error getting document:', error);
       return res.status(500).json({ error: 'Internal Server Error' });
     }
   }

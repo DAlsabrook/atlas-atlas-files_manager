@@ -22,4 +22,5 @@ module.exports = app;
 // check redis and mongo connections
 // curl 0.0.0.0:5000/status ; echo ""
 
-// 2a9e41c8-8e75-4dcf-ba0c-2d89db96bbca
+// x-token = 0dddb872-f3bb-4785-b62d-856c85d2f376
+// file id = 67329195f430a44b230a1243
