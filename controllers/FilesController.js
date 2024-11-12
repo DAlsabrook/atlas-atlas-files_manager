@@ -257,7 +257,6 @@ class FilesController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const fileId = req.params.id;
-      console.log(fileId)
 
       // Find the file
       const file = await dbClient.db.collection('files').findOne({
@@ -265,7 +264,7 @@ class FilesController {
         userId: ObjectId(userId),
         isPublic: true
       });
-      console.log(file)
+
       if (!file) {
         return res.status(404).json({ error: 'Not Found' });
       } else if (file.type === 'folder') {
@@ -274,16 +273,13 @@ class FilesController {
         })
       }
 
-      const filePath = path.join(__dirname, 'files', file.localPath);
-      // Method is breaking here because the file does exists locally but the task makes you check if the file is local or not
-      // Makes no sense because we are storing it in a db but im too tired to figure it out. Looking tomorrow
       // check if the file exists locally
-      if (!fs.existsSync(filePath)) {
+      if (!fs.existsSync(file.localPath)) {
         return res.status(404).json({ error: 'Not Found' });
       }
 
       const mimeType = mime.lookup(file.name);
-      const fileContent = fs.readFileSync(filePath);
+      const fileContent = fs.readFileSync(file.localPath);
       res.setHeader('Content-Type', mimeType);
 
       return res.status(200).send(fileContent);
