@@ -16,7 +16,7 @@ class RedisClient {
 
   async isAlive() {
     try {
-      await this.connect();
+      if (!this.connected) { await this.client.connect(); }
       const isConnected = await this.client.ping();
       return isConnected === 'PONG';
     } catch (err) {
@@ -31,7 +31,7 @@ class RedisClient {
       return;
     }
 
-    await this.connect();
+    if (!this.connected) { await this.client.connect(); }
     const value = await this.client.get(key);
     return value;
   }
@@ -43,7 +43,7 @@ class RedisClient {
     }
 
     try {
-      await this.connect();
+      if (!this.connected) { await this.client.connect(); }
       await this.client.set(key, value);
       await this.client.expire(key, duration);
     } catch (err) {
@@ -58,7 +58,7 @@ class RedisClient {
     }
 
     try {
-      await this.connect();
+      if (!this.connected) { await this.client.connect(); }
       await this.client.del(key);
     } catch (err) {
       console.log('Error deleting key in Redis:', err);
@@ -67,7 +67,7 @@ class RedisClient {
 
   async flushAll() {
     try {
-      await this.connect();
+      if (!this.connected) { await this.client.connect(); }
       await this.client.flushAll();
       console.log('All keys have been cleared from Redis');
     } catch (err) {

@@ -5,23 +5,24 @@ const path = require('path');
 const dbClient = require('../utils/db');
 const redisClient = require('../utils/redis');
 const mime = require('mime-types');
+const Bull = require('bull');
+const fileQueue = new Bull('fileQueue');
+
 
 class FilesController {
   static async postUpload(req, res) {
     try {
+
       const token = req.headers['x-token'];
       if (!token) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const cacheCheck = redisClient.isAlive();
-      if (!cacheCheck) return res.status(400).send('Cache not connected');
-
       const userId = await redisClient.get(`auth_${token}`);
       if (!userId) {
         return res.status(401).json({ error: 'Unauthorized' });
       }
-
+      console.log("HELLLOOO")
       const user = await dbClient.db.collection('users').findOne({ _id: ObjectId(userId) });
       if (!user) {
         return res.status(401).json({ error: 'Unauthorized' });
@@ -59,7 +60,7 @@ class FilesController {
         userId: ObjectId(userId),
         name,
         type,
-        isPublic,
+        isPublic: isPublic || false,
         parentId: parentIdObj || 0,
       };
 
@@ -69,6 +70,7 @@ class FilesController {
           id: result.insertedId.toString(),
           ...fileData,
         };
+
         return res.status(201).json(file);
       } else {
         const folderPath = process.env.FOLDER_PATH || '/tmp/files_manager';
@@ -86,6 +88,11 @@ class FilesController {
           id: result.insertedId.toString(),
           ...fileData,
         };
+
+        if (type === 'image') {
+          fileQueue.add({ userId, fileId: result.insertedId });
+        }
+
         return res.status(201).json(file);
       }
     } catch (error) {
@@ -138,7 +145,6 @@ class FilesController {
             }
           },
           { $skip: page * 20 },
-          // 20 page limit set here, which I believe is working
           { $limit: 20 }
         ]).toArray();
 
@@ -161,7 +167,6 @@ class FilesController {
 
       const fileId = req.params.id;
 
-      // find the file
       const file = await dbClient.db.collection('files').findOne({
         _id: ObjectId(fileId),
         userId: ObjectId(userId)
@@ -171,7 +176,6 @@ class FilesController {
         return res.status(404).json({ error: 'Not Found' });
       }
 
-      // update the found file
       const updateResult = await dbClient.db.collection('files').updateOne(
         {
           _id: ObjectId(fileId),
@@ -186,7 +190,6 @@ class FilesController {
         return res.status(500).json({ error: 'Failed to update the document' });
       }
 
-      // get the new updated file to return
       const updatedFile = await dbClient.db.collection('files').findOne({
         _id: ObjectId(fileId),
         userId: ObjectId(userId)
@@ -211,7 +214,6 @@ class FilesController {
 
       const fileId = req.params.id;
 
-      // Find the file
       const file = await dbClient.db.collection('files').findOne({
         _id: ObjectId(fileId),
         userId: ObjectId(userId)
@@ -221,7 +223,6 @@ class FilesController {
         return res.status(404).json({ error: 'Not Found' });
       }
 
-      // update the found file
       const updateResult = await dbClient.db.collection('files').updateOne(
         {
           _id: ObjectId(fileId),
@@ -236,7 +237,6 @@ class FilesController {
         return res.status(500).json({ error: 'Failed to update the document' });
       }
 
-      // get the new updated file to return
       const updatedFile = await dbClient.db.collection('files').findOne({
         _id: ObjectId(fileId),
         userId: ObjectId(userId)
@@ -257,8 +257,8 @@ class FilesController {
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const fileId = req.params.id;
+      const size = req.query.size;
 
-      // Find the file
       const file = await dbClient.db.collection('files').findOne({
         _id: ObjectId(fileId),
         userId: ObjectId(userId),
@@ -270,16 +270,20 @@ class FilesController {
       } else if (file.type === 'folder') {
         return res.status(400).json({
           error: "A folder doesn't have content"
-        })
+        });
       }
 
-      // check if the file exists locally
-      if (!fs.existsSync(file.localPath)) {
+      let filePath = file.localPath;
+      if (size && ['500', '250', '100'].includes(size)) {
+        filePath = `${file.localPath}_${size}`;
+      }
+
+      if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: 'Not Found' });
       }
 
       const mimeType = mime.lookup(file.name);
-      const fileContent = fs.readFileSync(file.localPath);
+      const fileContent = fs.readFileSync(filePath);
       res.setHeader('Content-Type', mimeType);
 
       return res.status(200).send(fileContent);
