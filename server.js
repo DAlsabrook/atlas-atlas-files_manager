@@ -22,4 +22,4 @@ module.exports = app;
 // check redis and mongo connections
 // curl 0.0.0.0:5000/status ; echo ""
 
-//  token = ad5c4941-2b64-4411-ae82-e41f6a69daef
+//  token = 
